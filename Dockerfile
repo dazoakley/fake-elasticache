@@ -1,5 +1,5 @@
 FROM ruby:alpine
-MAINTAINER Darren Oakley <darren.oakley@bbc.co.uk>
+MAINTAINER Darren Oakley <daz.oakley@gmail.com>
 
 RUN apk update && apk upgrade
 RUN apk add ruby-dev build-base
