@@ -1,0 +1,82 @@
+#!/usr/bin/env ruby
+
+require 'optparse'
+require 'eventmachine'
+
+module FakeElasticache
+  module Options
+    def parse
+      options = {
+        port:    11212,
+        bind:    '0.0.0.0',
+        servers: ['memcached|memcached|11211'],
+        version: ENV.fetch('MEMCACHED_VERSION', '2.4.14')
+      }
+
+      OptionParser.new do |opts|
+        opts.banner = 'Usage: fake_elasticache [options]'
+
+        opts.on('-p', '--port PORT', "Default: #{options[:port]}") do |v|
+          options[:port] = v
+        end
+
+        opts.on('-b', '--bind ADDR', "Default: #{options[:bind]}") do |v|
+          options[:bind] = v
+        end
+
+        opts.on('-s', '--servers SERVERS', "Default: #{options[:servers]}") do |v|
+          options[:servers] = v.split(',')
+        end
+      end.parse!
+
+      options
+    end
+
+    module_function :parse
+  end
+
+  class Server < EventMachine::Connection
+    def receive_data(data)
+      close_connection if data =~ /quit/i
+
+      puts "FakeElasticache::Server#receive_data - data: #{data}"
+
+      resp = case data
+             when /stats/i                            then "STAT version #{opts[:version]}\nEND\n"
+             when /config get cluster|get .*cluster/i then config_output
+             else
+               "Command: #{data} is unexpected\n"
+             end
+
+      puts "FakeElasticache::Server#receive_data - resp: #{resp}"
+
+      send_data(resp)
+    end
+
+    private
+
+    def opts
+      FakeElasticache.opts
+    end
+
+    def config_output
+      config_string = opts[:servers].join(' ')
+      "CONFIG cluster 0 #{config_string.length}\n1\n#{config_string}\n\nEND\n"
+    end
+  end
+
+  class << self
+    def run!
+      puts "FakeElasticache.run! - opts: #{opts}"
+      EventMachine.run do
+        EventMachine.start_server(opts[:bind], opts[:port], FakeElasticache::Server)
+      end
+    end
+
+    def opts
+      @opts ||= FakeElasticache::Options.parse
+    end
+  end
+end
+
+FakeElasticache.run!
