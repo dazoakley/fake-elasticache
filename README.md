@@ -5,6 +5,8 @@ development.
 
 Inspired heavily by https://github.com/stevenjack/fake_elasticache ...
 
+https://hub.docker.com/r/dazoakley/fake-elasticache/
+
 ## Usage
 
 ```
