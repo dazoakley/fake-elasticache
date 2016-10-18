@@ -6,10 +6,12 @@ require 'eventmachine'
 module FakeElasticache
   module Options
     def parse
+      ip = Resolv.getaddress('memcached')
+
       options = {
         port:    11212,
         bind:    '0.0.0.0',
-        servers: ['memcached|memcached|11211'],
+        servers: ["memcached|#{ip}|11211"],
         version: ENV.fetch('MEMCACHED_VERSION', '2.4.14')
       }
 
@@ -61,7 +63,7 @@ module FakeElasticache
 
     def config_output
       config_string = opts[:servers].join(' ')
-      "CONFIG cluster 0 #{config_string.length}\n1\n#{config_string}\n\nEND\n"
+      "CONFIG cluster 0 #{config_string.length}\r\n1\n#{config_string}\n\r\n END\r\n"
     end
   end
 
