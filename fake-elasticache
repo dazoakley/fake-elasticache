@@ -63,7 +63,7 @@ module FakeElasticache
 
     def config_output
       config_string = opts[:servers].join(' ')
-      "CONFIG cluster 0 #{config_string.length}\r\n1\n#{config_string}\n\r\n END\r\n"
+      "CONFIG cluster 0 #{config_string.length}\r\n1\n#{config_string}\n\r\nEND\r\n"
     end
   end
 
